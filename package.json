@@ -8,6 +8,10 @@
       "./src/index.ts"
     ]
   },
+  "allowScripts": {
+    "@google/genai": true,
+    "protobufjs": true
+  },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.84.0"
   },
