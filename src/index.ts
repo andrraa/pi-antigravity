@@ -49,6 +49,23 @@ export default function (pi: ExtensionAPI): void {
         return;
       }
 
+      if (action === "rename" && name) {
+        const rest = args.trim().split(/\s+/).slice(2).join(" ");
+        if (!rest) {
+          ctx.ui.notify("Pakai: /antigravity.account rename <nama_lama> <nama_baru>", "warning");
+          return;
+        }
+        if (!accounts[name]) {
+          ctx.ui.notify(`Akun tidak ditemukan: ${name}`, "warning");
+          return;
+        }
+        accounts[rest] = accounts[name];
+        delete accounts[name];
+        await saveJson(accountsPath, accounts);
+        ctx.ui.notify(`Akun ${name} → ${rest}`);
+        return;
+      }
+
       if (action === "use" && name) {
         if (!accounts[name]) {
           ctx.ui.notify(`Akun tidak ditemukan: ${name}`, "warning");
@@ -61,7 +78,7 @@ export default function (pi: ExtensionAPI): void {
         return;
       }
 
-      ctx.ui.notify("Pakai: /antigravity.account save <nama> | list | use <nama>", "warning");
+      ctx.ui.notify("Pakai: /antigravity.account save <nama> | list | use <nama> | rename <lama> <baru>", "warning");
     },
   });
 }
