@@ -1,0 +1,17 @@
+{
+  "name": "pi-antigravity-multi-account",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.84.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
