@@ -5,7 +5,8 @@
   "type": "module",
   "pi": {
     "extensions": [
-      "./src/index.ts"
+      "./src/index.ts",
+      "./node_modules/pi-antigravity/src/index.ts"
     ]
   },
   "allowScripts": {
@@ -13,7 +14,8 @@
     "protobufjs": true
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.84.0"
+    "@earendil-works/pi-coding-agent": "^0.84.0",
+    "pi-antigravity": "^0.4.1"
   },
   "devDependencies": {
     "typescript": "^7.0.2"
