@@ -66,6 +66,17 @@ export default function (pi: ExtensionAPI): void {
         return;
       }
 
+      if ((action === "delete" || action === "remove" || action === "rm") && name) {
+        if (!accounts[name]) {
+          ctx.ui.notify(`Akun tidak ditemukan: ${name}`, "warning");
+          return;
+        }
+        delete accounts[name];
+        await saveJson(accountsPath, accounts);
+        ctx.ui.notify(`Akun ${name} berhasil dihapus`);
+        return;
+      }
+
       if (action === "use" && name) {
         if (!accounts[name]) {
           ctx.ui.notify(`Akun tidak ditemukan: ${name}`, "warning");
@@ -78,7 +89,7 @@ export default function (pi: ExtensionAPI): void {
         return;
       }
 
-      ctx.ui.notify("Pakai: /antigravity.account save <nama> | list | use <nama> | rename <lama> <baru>", "warning");
+      ctx.ui.notify("Pakai: /antigravity.account save <nama> | list | use <nama> | rename <lama> <baru> | delete <nama>", "warning");
     },
   });
 }
