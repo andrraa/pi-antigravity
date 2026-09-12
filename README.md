@@ -9,6 +9,7 @@ Multi-account management extension for [pi-antigravity](https://github.com/andrr
 
 ## Features
 
+- ⚡ **Gemini 3.8 Flash & Next-Gen Support**: Full compatibility with Google Gemini 3.8 Flash, 3.7 Flash, 3.1 Pro, and Claude models via Antigravity.
 - 💾 **Save Accounts**: Store multiple authenticated sessions locally with custom aliases.
 - 🔄 **Quick Switching**: Switch between personal, work, or secondary accounts on the fly.
 - ✏️ **Rename Aliases**: Easily reorganize saved account names.
