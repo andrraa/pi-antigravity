@@ -3,18 +3,26 @@
 [![npm version](https://img.shields.io/npm/v/pi-antigravity-multi-account.svg?style=flat-square)](https://www.npmjs.com/package/pi-antigravity-multi-account)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-Multi-account management extension for [pi-antigravity](https://github.com/andrraa/pi-antigravity). Seamlessly save, switch, rename, and manage multiple Antigravity (Google) accounts within [Pi coding agent](https://github.com/earendil-works/pi-coding-agent).
+Standalone **Antigravity / Google Cloud Code** provider extension for [Pi coding agent](https://github.com/earendil-works/pi-coding-agent) with built-in multi-account management.
 
 ---
 
 ## Features
 
-- ⚡ **Gemini 3.8 Flash & Next-Gen Support**: Full compatibility with Google Gemini 3.8 Flash, 3.7 Flash, 3.1 Pro, and Claude models via Antigravity.
-- 💾 **Save Accounts**: Store multiple authenticated sessions locally with custom aliases.
-- 🔄 **Quick Switching**: Switch between personal, work, or secondary accounts on the fly.
-- ✏️ **Rename Aliases**: Easily reorganize saved account names.
-- 🗑️ **Delete Accounts**: Remove obsolete credentials from the store.
-- 🔒 **Secure Storage**: Account tokens are saved with restricted file permissions (`0600`).
+- ⚡ **Full Standalone Antigravity Provider**: Direct native integration without external extension dependencies.
+- 🤖 **Next-Gen Gemini & Claude Support**:
+  - `gemini-3.8-flash`
+  - `gemini-3.7-flash`
+  - `gemini-3.6-flash`
+  - `gemini-3.5-flash`
+  - `gemini-3.1-pro`
+  - `claude-sonnet-4-6` (Thinking)
+  - `claude-opus-4-6` (Thinking)
+  - `gpt-oss-120b`
+- 💾 **Save & Switch Accounts**: Store multiple authenticated sessions locally with custom aliases.
+- ✏️ **Rename & Manage**: Reorganize or delete saved accounts on demand.
+- 📊 **Quota & Model Diagnostics**: Check remaining quota pools with `/antigravity.usage` and models via `/antigravity.models`.
+- 🔒 **Secure Storage**: Account tokens stored with strict `0600` file permissions.
 
 ---
 
@@ -48,75 +56,53 @@ pi update git:andrraa/pi-antigravity
 
 ## Usage Guide
 
-All commands are run using the `/antigravity.account` slash command in Pi.
+### 1. Authentication & Multi-Account Management
 
-### 1. Saving Accounts
+All account management commands are run using `/antigravity.account`:
 
-Authenticate your account first, then assign it an alias:
-
+#### Login and Save First Account
 ```text
 /login antigravity
 /antigravity.account save work
 ```
 
-To add another account, repeat the login with your second Google account:
-
+#### Login and Save Second Account
 ```text
 /login antigravity
 /antigravity.account save personal
 ```
 
-### 2. Listing Saved Accounts
-
-View all stored accounts and their associated emails:
-
+#### List Saved Accounts
 ```text
 /antigravity.account list
 ```
 
-**Output example:**
-```text
-work: dev@company.com
-personal: user@gmail.com
-```
-
-### 3. Switching Accounts
-
-Activate a specific saved account:
-
+#### Switch Between Accounts
 ```text
 /antigravity.account use work
 ```
+> **Note:** Run `/reload` or restart your session after switching accounts.
 
-> **Note:** Run `/reload` or restart Pi session for the active token to take effect.
-
-### 4. Renaming an Account Alias
-
-Rename an existing saved profile:
-
-```text
-/antigravity.account rename <old_name> <new_name>
-```
-
-**Example:**
+#### Rename an Account Alias
 ```text
 /antigravity.account rename work office
 ```
 
-### 5. Deleting an Account
-
-Remove an account from storage:
-
+#### Delete an Account
 ```text
-/antigravity.account delete <name>
+/antigravity.account delete personal
 ```
-
 *(Aliases: `remove`, `rm`)*
 
-**Example:**
-```text
-/antigravity.account rm personal
-```
+---
+
+### 2. Antigravity Diagnostics & Quota
+
+| Command | Description |
+|---|---|
+| `/antigravity.usage` | Show shared quota pools (Gemini / Claude+GPT, 5h + weekly) |
+| `/antigravity.models [all]` | List active runtime models + remaining quota fraction |
+| `/antigravity.doctor` | Run sanitized connection and model diagnostics |
 
 ---
 
@@ -124,34 +110,21 @@ Remove an account from storage:
 
 | Action | Command Syntax | Description |
 |---|---|---|
-| **Save** | `/antigravity.account save <name>` | Save currently active login as `<name>` |
+| **Save** | `/antigravity.account save <name>` | Save current login as `<name>` |
 | **List** | `/antigravity.account list` | List all saved accounts |
-| **Use** | `/antigravity.account use <name>` | Switch active session to `<name>` |
+| **Use** | `/antigravity.account use <name>` | Switch active account to `<name>` |
 | **Rename** | `/antigravity.account rename <old> <new>` | Rename account alias |
-| **Delete** | `/antigravity.account delete <name>` | Delete account from storage (or `remove`/`rm`) |
+| **Delete** | `/antigravity.account delete <name>` | Remove account from storage (`remove`/`rm`) |
 
 ---
 
-## Development & Publishing
-
-### Versioning
-
-To bump the version:
+## Publishing to npm
 
 ```bash
-# Patch release (e.g. 0.1.0 -> 0.1.1)
-npm version patch
+# Bumping version
+npm version patch # or minor / major
 
-# Minor release (e.g. 0.1.0 -> 0.2.0)
-npm version minor
-
-# Major release (e.g. 0.1.0 -> 1.0.0)
-npm version major
-```
-
-### Publishing to npm
-
-```bash
+# Publish
 npm publish --access public
 ```
 

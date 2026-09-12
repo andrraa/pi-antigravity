@@ -1,7 +1,7 @@
 {
   "name": "pi-antigravity-multi-account",
   "version": "0.1.0",
-  "description": "Multi-account management extension for pi-antigravity and Pi coding agent",
+  "description": "Standalone Antigravity / Google Cloud Code provider with multi-account support for Pi Coding Agent",
   "main": "src/index.ts",
   "type": "module",
   "author": "andrraa",
@@ -21,7 +21,8 @@
     "pi-extension",
     "antigravity",
     "google-cloud-code",
-    "multi-account"
+    "multi-account",
+    "gemini"
   ],
   "files": [
     "src",
@@ -34,19 +35,20 @@
   },
   "pi": {
     "extensions": [
-      "./src/index.ts",
-      "./node_modules/pi-antigravity/src/index.ts"
+      "./src/index.ts"
     ]
   },
-  "allowScripts": {
-    "@google/genai": true,
-    "protobufjs": true
+  "peerDependencies": {
+    "@earendil-works/pi-ai": ">=0.80.0",
+    "@earendil-works/pi-coding-agent": ">=0.80.0"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.84.0",
-    "pi-antigravity": "^0.4.1"
+    "undici": "^8.10.0"
   },
   "devDependencies": {
+    "@earendil-works/pi-ai": "^0.84.2",
+    "@earendil-works/pi-coding-agent": "^0.84.0",
+    "@types/node": "^24.13.3",
     "typescript": "^7.0.2"
   }
 }
