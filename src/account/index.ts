@@ -40,7 +40,7 @@ function isSameAccount(a?: Credential, b?: Credential): boolean {
 
 async function switchAccount(name: string, accounts: Record<string, Credential>, ctx: ExtensionCommandContext): Promise<boolean> {
   if (!accounts[name]) {
-    ctx.ui.notify(`Akun tidak ditemukan: ${name}`, "warning");
+    ctx.ui.notify(`Account not found: ${name}`, "warning");
     return false;
   }
 
@@ -48,13 +48,13 @@ async function switchAccount(name: string, accounts: Record<string, Credential>,
   auth.antigravity = accounts[name];
   await saveJson(authPath, auth);
 
-  ctx.ui.notify(`✓ Mengaktifkan akun "${name}" (${describe(accounts[name])})...`);
+  ctx.ui.notify(`✓ Activating account "${name}" (${describe(accounts[name])})...`);
 
   // Auto-reload Pi session so newly selected credentials take effect immediately
   if (typeof ctx.reload === "function") {
     await ctx.reload();
   } else {
-    ctx.ui.notify("Jalankan /reload atau restart Pi agar perubahan token aktif.", "info");
+    ctx.ui.notify("Run /reload or restart Pi for token changes to take effect.", "info");
   }
   return true;
 }
@@ -75,7 +75,7 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
       if (!action) {
         const entries = Object.entries(accounts);
         if (!entries.length) {
-          ctx.ui.notify("Belum ada akun tersimpan. Gunakan /antigravity.account login <nama> atau /antigravity.account save <nama>", "warning");
+          ctx.ui.notify("No saved accounts found. Use /antigravity.account login <name> or /antigravity.account save <name>", "warning");
           return;
         }
 
@@ -84,7 +84,7 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
           return `${key}: ${describe(value)}${active}`;
         });
 
-        const selected = await ctx.ui.select("Pilih akun Antigravity aktif:", options);
+        const selected = await ctx.ui.select("Select active Antigravity account:", options);
         if (!selected) return;
 
         const chosenKey = selected.split(":")[0]?.trim();
@@ -98,15 +98,15 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
       if (action === "login") {
         const targetName = name;
         if (!targetName) {
-          ctx.ui.notify("Pakai: /antigravity.account login <nama>", "warning");
+          ctx.ui.notify("Usage: /antigravity.account login <name>", "warning");
           return;
         }
 
-        ctx.ui.notify(`Memulai Google OAuth untuk akun "${targetName}"...`);
+        ctx.ui.notify(`Starting Google OAuth authentication for account "${targetName}"...`);
         try {
           const creds = await loginAntigravity({
             onAuth: (info) => {
-              ctx.ui.notify(`Buka URL otentikasi di browser:\n${info.url}`);
+              ctx.ui.notify(`Open authentication URL in browser:\n${info.url}`);
             },
             onPrompt: async (info) => {
               const res = await ctx.ui.input(info.message, info.placeholder);
@@ -131,14 +131,14 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
           accounts[targetName] = creds;
           await saveJson(accountsPath, accounts);
 
-          ctx.ui.notify(`✓ Berhasil login & menyimpan akun "${targetName}" (${describe(creds)})`);
+          ctx.ui.notify(`✓ Successfully logged in and saved account "${targetName}" (${describe(creds)})`);
 
           if (typeof ctx.reload === "function") {
             await ctx.reload();
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          ctx.ui.notify(`Login gagal: ${msg}`, "error");
+          ctx.ui.notify(`Login failed: ${msg}`, "error");
         }
         return;
       }
@@ -146,12 +146,12 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
       // 3. Save currently active credentials
       if (action === "save" && name) {
         if (!currentAuth) {
-          ctx.ui.notify("Login dulu dengan /login antigravity atau /antigravity.account login <nama>", "warning");
+          ctx.ui.notify("Please sign in first with /login antigravity or /antigravity.account login <name>", "warning");
           return;
         }
         accounts[name] = currentAuth;
         await saveJson(accountsPath, accounts);
-        ctx.ui.notify(`✓ Akun "${name}" disimpan (${describe(currentAuth)})`);
+        ctx.ui.notify(`✓ Account "${name}" saved (${describe(currentAuth)})`);
         return;
       }
 
@@ -159,7 +159,7 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
       if (action === "list" || action === "ls") {
         const entries = Object.entries(accounts);
         if (!entries.length) {
-          ctx.ui.notify("Belum ada akun tersimpan");
+          ctx.ui.notify("No saved accounts found");
           return;
         }
 
@@ -168,7 +168,7 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
           const bullet = isActive ? "● [active]" : "○";
           return `${bullet} ${key}: ${describe(value)}`;
         });
-        ctx.ui.notify(`Daftar Akun Antigravity:\n${lines.join("\n")}`);
+        ctx.ui.notify(`Saved Antigravity Accounts:\n${lines.join("\n")}`);
         return;
       }
 
@@ -176,11 +176,11 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
       if (action === "usage" || action === "quota") {
         const entries = Object.entries(accounts);
         if (!entries.length) {
-          ctx.ui.notify("Belum ada akun tersimpan untuk dicek kuotanya", "warning");
+          ctx.ui.notify("No saved accounts to check quota for", "warning");
           return;
         }
 
-        ctx.ui.notify(`Mengecek kuota untuk ${entries.length} akun...`);
+        ctx.ui.notify(`Checking quota for ${entries.length} account(s)...`);
         const results = await Promise.allSettled(
           entries.map(async ([key, cred]) => {
             const token = typeof cred.access === "string" ? cred.access : undefined;
@@ -194,7 +194,7 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
         const summaryLines: string[] = ["=== Multi-Account Quota Status ==="];
         for (const res of results) {
           if (res.status === "rejected") {
-            summaryLines.push(`\n[!] Gagal mengambil kuota`);
+            summaryLines.push(`\n[!] Failed to retrieve quota`);
             continue;
           }
           const item = res.value;
@@ -245,43 +245,43 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
       if (action === "rename" && name) {
         const newName = parts[2];
         if (!newName) {
-          ctx.ui.notify("Pakai: /antigravity.account rename <nama_lama> <nama_baru>", "warning");
+          ctx.ui.notify("Usage: /antigravity.account rename <old_name> <new_name>", "warning");
           return;
         }
         if (!accounts[name]) {
-          ctx.ui.notify(`Akun tidak ditemukan: ${name}`, "warning");
+          ctx.ui.notify(`Account not found: ${name}`, "warning");
           return;
         }
         accounts[newName] = accounts[name];
         delete accounts[name];
         await saveJson(accountsPath, accounts);
-        ctx.ui.notify(`✓ Akun "${name}" diubah namanya menjadi "${newName}"`);
+        ctx.ui.notify(`✓ Account "${name}" renamed to "${newName}"`);
         return;
       }
 
       // 8. Delete account
       if ((action === "delete" || action === "remove" || action === "rm") && name) {
         if (!accounts[name]) {
-          ctx.ui.notify(`Akun tidak ditemukan: ${name}`, "warning");
+          ctx.ui.notify(`Account not found: ${name}`, "warning");
           return;
         }
         delete accounts[name];
         await saveJson(accountsPath, accounts);
-        ctx.ui.notify(`✓ Akun "${name}" berhasil dihapus`);
+        ctx.ui.notify(`✓ Account "${name}" successfully deleted`);
         return;
       }
 
       // Help message
       ctx.ui.notify(
-        "Panduan /antigravity.account:\n" +
-        "• (tanpa argumen)           : Buka menu pilihan interaktif TUI\n" +
-        "• login <nama>              : Login akun baru Google & langsung simpan\n" +
-        "• use <nama>                : Ganti akun aktif secara instan\n" +
-        "• list                      : Tampilkan daftar akun & akun aktif\n" +
-        "• usage                     : Cek status kuota semua akun sekaligus\n" +
-        "• save <nama>               : Simpan login aktif saat ini ke alias\n" +
-        "• rename <lama> <baru>      : Ubah nama alias akun\n" +
-        "• delete <nama>             : Hapus akun dari daftar",
+        "Usage for /antigravity.account:\n" +
+        "• (no arguments)            : Open interactive TUI account picker\n" +
+        "• login <name>              : Authenticate new Google account and save alias\n" +
+        "• use <name>                : Switch active account instantly\n" +
+        "• list                      : List all saved accounts and active profile\n" +
+        "• usage                     : Check quota status across all accounts\n" +
+        "• save <name>               : Save current active login as alias\n" +
+        "• rename <old> <new>        : Rename account alias\n" +
+        "• delete <name>             : Delete account from storage",
         "warning"
       );
     },
