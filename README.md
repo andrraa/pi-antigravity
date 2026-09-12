@@ -130,6 +130,16 @@ npm publish --access public
 
 ---
 
+## Disclaimer & Terms of Use
+
+> **⚠️ Unofficial Project & Limitation of Liability:**
+>
+> - This project is an **independent, community-maintained, and unofficial extension**. It is **not** affiliated with, endorsed by, sponsored by, or associated with Google LLC, Alphabet Inc., or Anthropic.
+> - **Use at your own risk.** You are solely responsible for how you use this extension and for complying with the applicable Terms of Service of Google Cloud, Google Accounts, and any related APIs.
+> - The authors and contributors assume **no liability or responsibility** for any account bans, suspensions, restrictions, data loss, quota consumption, billing issues, or any other consequences resulting from the use of this software.
+
+---
+
 ## License
 
 [MIT](LICENSE) © andrraa
