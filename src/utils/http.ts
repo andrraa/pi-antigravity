@@ -53,14 +53,34 @@ async function getDispatcher(): Promise<unknown> {
   return dispatcherPromise;
 }
 
-/** fetch() bound to this provider's keep-alive connection pool. */
+/** Jittered delay helper for natural exponential backoff. */
+export async function sleepWithJitter(baseMs: number, attempt: number, maxMs = 15000): Promise<void> {
+  const expDelay = Math.min(maxMs, baseMs * 2 ** attempt);
+  const jitter = expDelay * (0.7 + Math.random() * 0.6); // 70% - 130% jitter spread
+  await new Promise((resolve) => setTimeout(resolve, jitter));
+}
+
+/** fetch() bound to this provider's keep-alive connection pool with jittered backoff retry on 429/503. */
 export async function antigravityFetch(
   input: string | URL,
   init: RequestInit = {},
+  retries = 2,
 ): Promise<Response> {
   const dispatcher = await getDispatcher();
-  if (!dispatcher) return fetch(input, init);
-  return fetch(input, { ...init, dispatcher } as DispatcherInit);
+  const fetchOpts = dispatcher ? ({ ...init, dispatcher } as DispatcherInit) : init;
+
+  let attempt = 0;
+  while (true) {
+    const res = await fetch(input, fetchOpts);
+    if ((res.status === 429 || res.status === 503) && attempt < retries) {
+      const retryAfter = res.headers.get("retry-after");
+      const delayMs = retryAfter ? parseFloat(retryAfter) * 1000 || 2000 : 1500;
+      await sleepWithJitter(delayMs, attempt);
+      attempt++;
+      continue;
+    }
+    return res;
+  }
 }
 
 /**

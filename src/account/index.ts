@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { loginAntigravity } from "../auth/index.js";
 import { fetchAccountUsage } from "../usage/index.js";
+import { clearClientCaches } from "../client/index.js";
 import type { AntigravityOAuthCredentials } from "../types/types.js";
 
 type Credential = AntigravityOAuthCredentials & Record<string, unknown>;
@@ -47,6 +48,9 @@ async function switchAccount(name: string, accounts: Record<string, Credential>,
   const auth = await readJson<AuthStore>(authPath, {});
   auth.antigravity = accounts[name];
   await saveJson(authPath, auth);
+
+  // Clear client and project ID caches across accounts to prevent cross-account leakage
+  clearClientCaches();
 
   ctx.ui.notify(`✓ Activating account "${name}" (${describe(accounts[name])})...`);
 

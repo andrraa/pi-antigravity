@@ -431,8 +431,10 @@ export async function loadCodeAssist(token: string): Promise<string | undefined>
   return projectId;
 }
 
-export function clearProjectCache(): void {
+export function clearClientCaches(): void {
   projectCache.clear();
+  modelCache.clear();
+  inFlightModelLookups.clear();
 }
 
 export function resolveProjectId(opts: {
