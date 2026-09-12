@@ -1,8 +1,37 @@
 {
   "name": "pi-antigravity-multi-account",
   "version": "0.1.0",
-  "private": true,
+  "description": "Multi-account management extension for pi-antigravity and Pi coding agent",
+  "main": "src/index.ts",
   "type": "module",
+  "author": "andrraa",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrraa/pi-antigravity.git"
+  },
+  "bugs": {
+    "url": "https://github.com/andrraa/pi-antigravity/issues"
+  },
+  "homepage": "https://github.com/andrraa/pi-antigravity#readme",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-coding-agent",
+    "pi-extension",
+    "antigravity",
+    "google-cloud-code",
+    "multi-account"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck"
+  },
   "pi": {
     "extensions": [
       "./src/index.ts",

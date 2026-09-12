@@ -1,5 +1,8 @@
 # pi-antigravity-multi-account
 
+[![npm version](https://img.shields.io/npm/v/pi-antigravity-multi-account.svg?style=flat-square)](https://www.npmjs.com/package/pi-antigravity-multi-account)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+
 Multi-account management extension for [pi-antigravity](https://github.com/andrraa/pi-antigravity). Seamlessly save, switch, rename, and manage multiple Antigravity (Google) accounts within [Pi coding agent](https://github.com/earendil-works/pi-coding-agent).
 
 ---
@@ -16,13 +19,25 @@ Multi-account management extension for [pi-antigravity](https://github.com/andrr
 
 ## Installation
 
-Install directly into Pi via Git:
+### Via npm (recommended)
+
+```bash
+pi install npm:pi-antigravity-multi-account
+```
+
+To update:
+
+```bash
+pi update npm:pi-antigravity-multi-account
+```
+
+### Via Git
 
 ```bash
 pi install git:andrraa/pi-antigravity
 ```
 
-To update to the latest version:
+To update:
 
 ```bash
 pi update git:andrraa/pi-antigravity
@@ -116,6 +131,31 @@ Remove an account from storage:
 
 ---
 
+## Development & Publishing
+
+### Versioning
+
+To bump the version:
+
+```bash
+# Patch release (e.g. 0.1.0 -> 0.1.1)
+npm version patch
+
+# Minor release (e.g. 0.1.0 -> 0.2.0)
+npm version minor
+
+# Major release (e.g. 0.1.0 -> 1.0.0)
+npm version major
+```
+
+### Publishing to npm
+
+```bash
+npm publish --access public
+```
+
+---
+
 ## License
 
-MIT
+[MIT](LICENSE) © andrraa
