@@ -3,14 +3,14 @@
 [![npm version](https://img.shields.io/npm/v/pi-antigravity-multi-account.svg?style=flat-square)](https://www.npmjs.com/package/pi-antigravity-multi-account)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-Standalone **Antigravity / Google Cloud Code** provider extension for [Pi coding agent](https://github.com/earendil-works/pi-coding-agent) with built-in multi-account management.
+Standalone **Antigravity / Google Cloud Code** provider extension for [Pi coding agent](https://github.com/earendil-works/pi-coding-agent) featuring interactive multi-account switching and quota monitoring.
 
 ---
 
 ## Features
 
-- ⚡ **Full Standalone Antigravity Provider**: Direct native integration without external extension dependencies.
-- 🤖 **Next-Gen Gemini & Claude Support**:
+- ⚡ **Standalone Antigravity Provider**: Zero external provider dependencies, fully self-contained.
+- 🤖 **Next-Gen Gemini & Claude Models**:
   - `gemini-3.8-flash`
   - `gemini-3.7-flash`
   - `gemini-3.6-flash`
@@ -19,10 +19,11 @@ Standalone **Antigravity / Google Cloud Code** provider extension for [Pi coding
   - `claude-sonnet-4-6` (Thinking)
   - `claude-opus-4-6` (Thinking)
   - `gpt-oss-120b`
-- 💾 **Save & Switch Accounts**: Store multiple authenticated sessions locally with custom aliases.
-- ✏️ **Rename & Manage**: Reorganize or delete saved accounts on demand.
-- 📊 **Quota & Model Diagnostics**: Check remaining quota pools with `/antigravity.usage` and models via `/antigravity.models`.
-- 🔒 **Secure Storage**: Account tokens stored with strict `0600` file permissions.
+- 🖥️ **Interactive TUI Account Picker**: Simply type `/antigravity.account` to select and switch accounts from an interactive menu.
+- 🔑 **Direct Login to Alias**: Authenticate new accounts and name them in a single step via `/antigravity.account login <alias>`.
+- 📊 **Multi-Account Quota Dashboard**: View remaining quotas across all saved accounts simultaneously with `/antigravity.account usage`.
+- 🔄 **Automatic Live Switching**: Switching an account triggers a live session reload automatically.
+- 🔒 **Secure Storage**: Credentials stored in `~/.pi/agent/antigravity-accounts.json` with strict `0600` file permissions.
 
 ---
 
@@ -56,65 +57,64 @@ pi update git:andrraa/pi-antigravity
 
 ## Usage Guide
 
-### 1. Authentication & Multi-Account Management
+All multi-account features are accessible via `/antigravity.account`:
 
-All account management commands are run using `/antigravity.account`:
-
-#### Login and Save First Account
+### 1. Interactive Account Picker (TUI)
+Just run the command with no arguments to pick an account interactively:
 ```text
-/login antigravity
-/antigravity.account save work
+/antigravity.account
 ```
 
-#### Login and Save Second Account
+### 2. Login Directly to an Alias
+Authenticate and save a new profile in one go:
 ```text
-/login antigravity
-/antigravity.account save personal
+/antigravity.account login work
+/antigravity.account login personal
 ```
 
-#### List Saved Accounts
+### 3. List All Saved Accounts
+View saved profiles with active session indicators:
 ```text
 /antigravity.account list
 ```
 
-#### Switch Between Accounts
+**Output example:**
+```text
+● [active] work: dev@company.com
+○ personal: user@gmail.com
+```
+
+### 4. Switch Accounts
+Quickly switch the active profile:
 ```text
 /antigravity.account use work
 ```
-> **Note:** Run `/reload` or restart your session after switching accounts.
 
-#### Rename an Account Alias
+### 5. Multi-Account Quota Dashboard
+Check quota and rate limits across **all** your accounts at once:
 ```text
-/antigravity.account rename work office
+/antigravity.account usage
 ```
 
-#### Delete an Account
+### 6. Rename or Delete Accounts
 ```text
+# Rename alias
+/antigravity.account rename work office
+
+# Delete account
 /antigravity.account delete personal
 ```
-*(Aliases: `remove`, `rm`)*
 
 ---
 
-### 2. Antigravity Diagnostics & Quota
+## Provider Commands
 
 | Command | Description |
 |---|---|
-| `/antigravity.usage` | Show shared quota pools (Gemini / Claude+GPT, 5h + weekly) |
-| `/antigravity.models [all]` | List active runtime models + remaining quota fraction |
+| `/antigravity.account` | Open interactive account switcher or manage accounts |
+| `/antigravity.usage` | Show active account quota pools (Gemini / Claude+GPT) |
+| `/antigravity.models [all]` | List runtime models + remaining quota fraction |
 | `/antigravity.doctor` | Run sanitized connection and model diagnostics |
-
----
-
-## Command Summary
-
-| Action | Command Syntax | Description |
-|---|---|---|
-| **Save** | `/antigravity.account save <name>` | Save current login as `<name>` |
-| **List** | `/antigravity.account list` | List all saved accounts |
-| **Use** | `/antigravity.account use <name>` | Switch active account to `<name>` |
-| **Rename** | `/antigravity.account rename <old> <new>` | Rename account alias |
-| **Delete** | `/antigravity.account delete <name>` | Remove account from storage (`remove`/`rm`) |
 
 ---
 
@@ -124,7 +124,7 @@ All account management commands are run using `/antigravity.account`:
 # Bumping version
 npm version patch # or minor / major
 
-# Publish
+# Publish to npm registry
 npm publish --access public
 ```
 
