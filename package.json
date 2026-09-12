@@ -1,6 +1,6 @@
 {
   "name": "pi-antigravity-multi-account",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Standalone Antigravity / Google Cloud Code provider with multi-account support for Pi Coding Agent",
   "main": "src/index.ts",
   "type": "module",
