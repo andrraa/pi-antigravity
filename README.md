@@ -3,39 +3,34 @@
 [![npm version](https://img.shields.io/npm/v/pi-antigravity-multi-account.svg?style=flat-square)](https://www.npmjs.com/package/pi-antigravity-multi-account)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-Standalone **Antigravity / Google Cloud Code** provider extension for [Pi coding agent](https://github.com/earendil-works/pi-coding-agent) featuring interactive multi-account switching and quota monitoring.
+Standalone **Antigravity / Google Cloud Code** provider extension for [Pi coding agent](https://github.com/earendil-works/pi-coding-agent) featuring interactive multi-account switching, simultaneous quota monitoring, automatic session reloading, and intelligent rate-limit retries.
 
 ---
 
-## Features
+## Key Features
 
-- ⚡ **Standalone Antigravity Provider**: Zero external provider dependencies, fully self-contained.
-- 🤖 **Next-Gen Gemini & Claude Models**:
-  - `gemini-3.8-flash`
-  - `gemini-3.7-flash`
-  - `gemini-3.6-flash`
-  - `gemini-3.5-flash`
-  - `gemini-3.1-pro`
-  - `claude-sonnet-4-6` (Thinking)
-  - `claude-opus-4-6` (Thinking)
-  - `gpt-oss-120b`
-- 🖥️ **Interactive TUI Account Picker**: Simply type `/antigravity.account` to select and switch accounts from an interactive menu.
-- 🔑 **Direct Login to Alias**: Authenticate new accounts and name them in a single step via `/antigravity.account login <alias>`.
-- 📊 **Multi-Account Quota Dashboard**: View remaining quotas across all saved accounts simultaneously with `/antigravity.account usage`.
-- 🔄 **Automatic Live Switching**: Switching an account triggers a live session reload automatically.
-- 🔒 **Secure Storage**: Credentials stored in `~/.pi/agent/antigravity-accounts.json` with strict `0600` file permissions.
+- ⚡ **Standalone Native Provider**: Zero external provider or CLI binaries required; native `streamSimple` implementation with low overhead.
+- 🧠 **Next-Gen Gemini & Claude Models**: Direct access to `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.1-pro`, `claude-sonnet-4-6`, `claude-opus-4-6`, and `gpt-oss-120b`.
+- 👥 **Interactive TUI Account Switcher**: Run `/antigravity.account` with no arguments to pick accounts interactively.
+- 🔑 **Single-Step Alias Login**: Authenticate new Google accounts directly into a named alias (`/antigravity.account login <alias>`).
+- 📊 **Multi-Account Quota Dashboard**: View remaining quotas and tier status across all accounts simultaneously via `/antigravity.account usage`.
+- 🔄 **Zero-Leakage Account Switching**: Switching profiles clears project and model caches, updates credentials, and triggers a live session reload immediately.
+- 🛡️ **Jittered Backoff Retry**: Automatic exponential retry with jitter on `429 (Too Many Requests)` and `503 (Service Unavailable)` responses.
+- 🧩 **Pi >= 0.86 Full Compatibility**: Seamlessly resolves tools and system instructions from normalized `TranscriptContext` as well as legacy `Context` models.
+- ⚡ **Connection Prewarming**: Pre-establishes TLS connections and utilizes persistent keep-alive connection pooling to eliminate cold-start latency.
+- 🔒 **Secure Credential Storage**: Multi-account profiles stored in `~/.pi/agent/antigravity-accounts.json` with strict `0o600` file permissions.
 
 ---
 
 ## Installation
 
-### Via npm (recommended)
+### Via npm (Recommended)
 
 ```bash
 pi install npm:pi-antigravity-multi-account
 ```
 
-To update:
+To update to the latest release:
 
 ```bash
 pi update npm:pi-antigravity-multi-account
@@ -55,54 +50,36 @@ pi update git:andrraa/pi-antigravity
 
 ---
 
-## Usage Guide
+## Multi-Account Guide (`/antigravity.account`)
 
-All multi-account features are accessible via `/antigravity.account`:
+Manage all your accounts effortlessly using the `/antigravity.account` command:
 
-### 1. Interactive Account Picker (TUI)
-Just run the command with no arguments to pick an account interactively:
+| Subcommand | Syntax | Description |
+|---|---|---|
+| *(none)* | `/antigravity.account` | Open interactive TUI account picker |
+| `login` | `/antigravity.account login <name>` | Authenticate a new Google account via OAuth and assign an alias |
+| `use` / `switch` | `/antigravity.account use <name>` | Switch active account and trigger live session reload |
+| `list` / `ls` | `/antigravity.account list` | List all saved accounts with active account indicator (`● [active]`) |
+| `usage` / `quota` | `/antigravity.account usage` | Check real-time quota status across all saved accounts |
+| `save` | `/antigravity.account save <name>` | Save current active session credentials under a new alias |
+| `rename` | `/antigravity.account rename <old> <new>` | Rename an existing account alias |
+| `delete` / `rm` | `/antigravity.account delete <name>` | Remove an account from storage |
+
+### Quick Examples
+
 ```text
-/antigravity.account
-```
-
-### 2. Login Directly to an Alias
-Authenticate and save a new profile in one go:
-```text
+# 1. Login with multiple accounts
 /antigravity.account login work
 /antigravity.account login personal
-```
 
-### 3. List All Saved Accounts
-View saved profiles with active session indicators:
-```text
-/antigravity.account list
-```
-
-**Output example:**
-```text
-● [active] work: dev@company.com
-○ personal: user@gmail.com
-```
-
-### 4. Switch Accounts
-Quickly switch the active profile:
-```text
-/antigravity.account use work
-```
-
-### 5. Multi-Account Quota Dashboard
-Check quota and rate limits across **all** your accounts at once:
-```text
+# 2. Check quota across all accounts at once
 /antigravity.account usage
-```
 
-### 6. Rename or Delete Accounts
-```text
-# Rename alias
-/antigravity.account rename work office
+# 3. Switch active account
+/antigravity.account use work
 
-# Delete account
-/antigravity.account delete personal
+# 4. Or switch interactively
+/antigravity.account
 ```
 
 ---
@@ -111,14 +88,40 @@ Check quota and rate limits across **all** your accounts at once:
 
 | Command | Description |
 |---|---|
-| `/antigravity.account` | Open interactive account switcher or manage accounts |
-| `/antigravity.usage` | Show active account quota pools (Gemini / Claude+GPT) |
-| `/antigravity.models [all]` | List runtime models + remaining quota fraction |
-| `/antigravity.doctor` | Run sanitized connection and model diagnostics |
+| `/antigravity.account [subcommand]` | Manage multi-account profiles, switch accounts, and monitor multi-account quotas |
+| `/antigravity.usage` | Show active account quota pools (Gemini / Claude + GPT, 5h reset & weekly) |
+| `/antigravity.models [all]` | List available runtime models and remaining pool fractions |
+| `/antigravity.doctor` | Run sanitized connection, project, and model diagnostics |
 
 ---
 
-## Publishing to npm
+## Supported Models
+
+| Model ID | Thinking Support | Max Output | Description |
+|---|---|---|---|
+| `antigravity/gemini-3.8-flash` | Off, Minimal, Low, Medium, High, XHigh | 64k tokens | Latest generation fast multimodel agent |
+| `antigravity/gemini-3.7-flash` | Off, Minimal, Low, Medium, High, XHigh | 64k tokens | High-performance multimodal reasoning model |
+| `antigravity/gemini-3.6-flash` | Low, Medium, High | 64k tokens | Fast agentic Flash model |
+| `antigravity/gemini-3.5-flash` | Minimal, Low, Medium, High | 64k tokens | Efficient Flash model |
+| `antigravity/gemini-3.1-pro` | Low, High | ~64k tokens | Advanced reasoning model |
+| `antigravity/claude-sonnet-4-6` | Thinking (Minimal to XHigh) | 64k tokens | Anthropic Claude Sonnet with reasoning |
+| `antigravity/claude-opus-4-6` | Thinking (Minimal to High) | 64k tokens | Anthropic Claude Opus with deep reasoning |
+| `antigravity/gpt-oss-120b` | Medium | 32k tokens | Open-source large parameter model |
+
+---
+
+## Configuration & Environment Variables
+
+| Variable | Description | Default |
+|---|---|---|
+| `ANTIGRAVITY_BASE_URL` | Override the Google Cloud Code endpoint URL | `https://cloudcode-pa.googleapis.com` |
+| `ANTIGRAVITY_PROJECT_ID` | Override Google Cloud Project ID explicitly | Auto-discovered or derived from user email |
+| `ANTIGRAVITY_NO_PREWARM` | Disable TLS prewarming on extension load (`1` or `true`) | Disabled (prewarming enabled) |
+| `ANTIGRAVITY_USER_AGENT` | Custom User-Agent header string | `antigravity/1.15.8 <os>/<arch>` |
+
+---
+
+## Publishing
 
 ```bash
 # Bumping version
