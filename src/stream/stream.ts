@@ -9,6 +9,8 @@ import {
   type Tool,
   type ToolCall,
 } from "@earendil-works/pi-ai";
+// Namespace import: transcript helpers exist on pi-ai >= 0.86; resolved at runtime.
+import * as piAi from "@earendil-works/pi-ai";
 import {
   antigravityHeaders,
   endpointCandidates,
@@ -75,6 +77,103 @@ const ANTIGRAVITY_NO_PREAMBLE_INSTRUCTION =
 
 let toolCallCounter = 0;
 
+interface SystemMessageLike {
+  role?: string;
+  content?: string | Array<{ type?: string; text?: string }>;
+  sections?: Record<string, unknown>;
+  toolsAdded?: Tool[];
+  toolsRemoved?: Array<{ name: string }>;
+  tools?: Tool[];
+}
+
+interface PiAiTranscriptModule {
+  getCurrentTools?: (messages: Context["messages"]) => Tool[];
+  getCurrentSystemPrompt?: (messages: Context["messages"]) => string;
+}
+
+function transcriptModule(): PiAiTranscriptModule {
+  return piAi as unknown as PiAiTranscriptModule;
+}
+
+function asSystemMessages(messages: Context["messages"] | undefined): SystemMessageLike[] {
+  return [...(messages ?? [])] as SystemMessageLike[];
+}
+
+function extractTranscriptSystemPrompt(messages: readonly SystemMessageLike[]): string {
+  const parts: string[] = [];
+  for (const message of messages) {
+    if (message?.role !== "system") continue;
+    if (message.sections && typeof message.sections === "object") {
+      const sectionParts = Object.values(message.sections).filter(
+        (value): value is string => typeof value === "string" && value.trim().length > 0,
+      );
+      if (sectionParts.length > 0) {
+        parts.push(sectionParts.join("\n\n"));
+        continue;
+      }
+    }
+    if (typeof message.content === "string" && message.content.trim()) {
+      parts.push(message.content);
+    } else if (Array.isArray(message.content)) {
+      const texts = message.content
+        .map((block) => (typeof block === "string" ? block : block?.text || ""))
+        .filter((text) => text.trim().length > 0);
+      if (texts.length > 0) parts.push(texts.join("\n\n"));
+    }
+  }
+  return parts.join("\n\n");
+}
+
+function extractTranscriptTools(messages: readonly SystemMessageLike[]): Tool[] {
+  const tools = new Map<string, Tool>();
+  for (const message of messages) {
+    if (message?.role !== "system") continue;
+    for (const tool of message.toolsRemoved ?? []) {
+      tools.delete(tool.name);
+    }
+    for (const tool of [...(message.toolsAdded ?? []), ...(message.tools ?? [])]) {
+      if (tool && typeof tool.name === "string") tools.set(tool.name, tool);
+    }
+  }
+  return [...tools.values()];
+}
+
+/**
+ * pi >= 0.86 hands providers a normalized TranscriptContext: the system prompt and
+ * tool declarations live in system messages and must be read with
+ * `getCurrentSystemPrompt()` / `getCurrentTools()`. Older releases still pass the
+ * flat Context fields. Resolve both so requests are not sent without tools.
+ */
+export function resolveCurrentSystemPrompt(context: Context): string | undefined {
+  const helper = transcriptModule().getCurrentSystemPrompt;
+  if (typeof helper === "function") {
+    try {
+      const fromHelper = helper(context.messages ?? []);
+      if (fromHelper?.trim()) return fromHelper;
+    } catch {
+      // Fall through to local replay / legacy fields.
+    }
+  }
+  const fromTranscript = extractTranscriptSystemPrompt(asSystemMessages(context.messages));
+  if (fromTranscript.trim()) return fromTranscript;
+  return context.systemPrompt;
+}
+
+export function resolveCurrentTools(context: Context): Tool[] | undefined {
+  const helper = transcriptModule().getCurrentTools;
+  if (typeof helper === "function") {
+    try {
+      const fromHelper = helper(context.messages ?? []);
+      if (fromHelper.length > 0) return fromHelper;
+    } catch {
+      // Fall through to local replay / legacy fields.
+    }
+  }
+  const fromTranscript = extractTranscriptTools(asSystemMessages(context.messages));
+  if (fromTranscript.length > 0) return fromTranscript;
+  return context.tools;
+}
+
 function sanitizeToolCallId(id: string, fallbackName?: string): string {
   const cleaned = id.replace(/[^a-zA-Z0-9_-]/g, "_");
   const capped = cleaned.slice(0, 64);
@@ -140,6 +239,7 @@ export function convertMessages(
 ): GeminiContent[] {
   const contents: GeminiContent[] = [];
   for (const msg of context.messages) {
+    if ((msg.role as string) === "system") continue;
     if (msg.role === "user") {
       const parts = asTextParts(msg.content);
       appendTurn(contents, GeminiRole.User, parts);
@@ -377,6 +477,9 @@ export function buildRequest(
   options: AntigravityStreamOptions,
   runtimeModel: string,
 ): AntigravityGenerateRequest {
+  const systemPromptText = resolveCurrentSystemPrompt(context);
+  const declaredTools = resolveCurrentTools(context);
+
   const request: GeminiRequestBody = {
     contents: convertMessages(model, context, runtimeModel),
     systemInstruction: {
@@ -384,7 +487,7 @@ export function buildRequest(
       parts: [
         { text: ANTIGRAVITY_SYSTEM_INSTRUCTION },
         { text: ANTIGRAVITY_NO_PREAMBLE_INSTRUCTION },
-        ...(context.systemPrompt ? [{ text: sanitizeText(context.systemPrompt) }] : []),
+        ...(systemPromptText ? [{ text: sanitizeText(systemPromptText) }] : []),
       ],
     },
   };
@@ -407,7 +510,7 @@ export function buildRequest(
   if (Object.keys(generationConfig).length) request.generationConfig = generationConfig;
 
   const tools = convertTools(
-    context.tools,
+    declaredTools,
     model.id.startsWith("claude-") || model.id.startsWith("gpt-oss-"),
   );
   if (tools) {
