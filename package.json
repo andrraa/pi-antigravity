@@ -31,7 +31,8 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run typecheck"
+    "test": "rm -rf .tmp-test && tsc -p tsconfig.test.json && node --test .tmp-test/test",
+    "prepublishOnly": "npm test && npm run typecheck"
   },
   "pi": {
     "extensions": [

@@ -75,6 +75,9 @@ export async function antigravityFetch(
     if ((res.status === 429 || res.status === 503) && attempt < retries) {
       const retryAfter = res.headers.get("retry-after");
       const delayMs = retryAfter ? parseFloat(retryAfter) * 1000 || 2000 : 1500;
+      // Drain the discarded response so its socket returns to the keep-alive pool
+      // instead of being held until GC.
+      void res.body?.cancel().catch(() => {});
       await sleepWithJitter(delayMs, attempt);
       attempt++;
       continue;

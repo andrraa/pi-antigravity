@@ -2,9 +2,10 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { loginAntigravity } from "../auth/index.js";
+import { getApiKey, loginAntigravity, refreshAntigravityToken } from "../auth/index.js";
 import { fetchAccountUsage } from "../usage/index.js";
 import { clearClientCaches } from "../client/index.js";
+import { safeError } from "../utils/index.js";
 import type { AntigravityOAuthCredentials } from "../types/types.js";
 
 type Credential = AntigravityOAuthCredentials & Record<string, unknown>;
@@ -37,6 +38,17 @@ function isSameAccount(a?: Credential, b?: Credential): boolean {
   if (a.access && b.access && a.access === b.access) return true;
   if (a.refresh && b.refresh && a.refresh === b.refresh) return true;
   return false;
+}
+
+/** Pi only refreshes the active account, so every other saved account holds a stale
+ * access token that 401s on the quota endpoint. Refresh it on demand. */
+async function ensureFreshCredential(credential: Credential): Promise<Credential> {
+  if (credential.expires && credential.expires > Date.now()) return credential;
+  try {
+    return await refreshAntigravityToken(credential);
+  } catch (error) {
+    throw new Error(`token refresh failed: ${safeError(error)}`);
+  }
 }
 
 async function switchAccount(name: string, accounts: Record<string, Credential>, ctx: ExtensionCommandContext): Promise<boolean> {
@@ -187,18 +199,37 @@ export function registerAccountCommands(pi: ExtensionAPI): void {
         ctx.ui.notify(`Checking quota for ${entries.length} account(s)...`);
         const results = await Promise.allSettled(
           entries.map(async ([key, cred]) => {
-            const token = typeof cred.access === "string" ? cred.access : undefined;
-            if (!token) return { key, error: "No token" };
-            const apiKey = cred.projectId ? `${token}:${String(cred.projectId)}` : token;
-            const usage = await fetchAccountUsage(apiKey);
-            return { key, cred, usage };
+            const fresh = await ensureFreshCredential(cred);
+            const refreshed = fresh !== cred;
+            const active = isSameAccount(currentAuth, cred);
+            try {
+              const usage = await fetchAccountUsage(getApiKey(fresh));
+              return { key, cred: fresh, usage, refreshed, active };
+            } catch (error) {
+              return { key, cred: fresh, error: safeError(error), refreshed, active };
+            }
           })
         );
+
+        let accountsChanged = false;
+        let authChanged = false;
+        for (const result of results) {
+          if (result.status !== "fulfilled" || !result.value.refreshed) continue;
+          accounts[result.value.key] = result.value.cred;
+          accountsChanged = true;
+          if (result.value.active) {
+            auth.antigravity = result.value.cred;
+            authChanged = true;
+          }
+        }
+        if (accountsChanged) await saveJson(accountsPath, accounts);
+        if (authChanged) await saveJson(authPath, auth);
 
         const summaryLines: string[] = ["=== Multi-Account Quota Status ==="];
         for (const res of results) {
           if (res.status === "rejected") {
-            summaryLines.push(`\n[!] Failed to retrieve quota`);
+            const reason = res.reason instanceof Error ? res.reason.message : String(res.reason);
+            summaryLines.push(`\n[!] Failed to retrieve quota: ${reason}`);
             continue;
           }
           const item = res.value;
