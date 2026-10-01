@@ -78,6 +78,35 @@ test("convertMessages prepends the required user turn and maps tool results", ()
   ]);
 });
 
+test("convertMessages fills a synthetic thoughtSignature on unsigned tool calls", () => {
+  const context = {
+    messages: [
+      {
+        role: "assistant",
+        provider: "antigravity",
+        model: model.id,
+        content: [
+          { type: "toolCall", id: "c1", name: "a", arguments: {}, thoughtSignature: "REALSIG" },
+          { type: "toolCall", id: "c2", name: "b", arguments: {} },
+        ],
+      },
+    ],
+  } as unknown as Context;
+
+  const [, turn] = convertMessages(model, context, "gemini-3.7-flash-tiered");
+  const parts = turn?.parts as Array<{ thoughtSignature?: string }>;
+  assert.equal(parts[0]?.thoughtSignature, "REALSIG");
+  assert.equal(parts[1]?.thoughtSignature, "skip_thought_signature_validator");
+
+  const claude = convertMessages(
+    { id: "claude-sonnet-4-6" } as Model<Api>,
+    context,
+    "claude-sonnet-4-6",
+  );
+  const claudeParts = claude[1]?.parts as Array<{ thoughtSignature?: string }>;
+  assert.equal(claudeParts[1]?.thoughtSignature, undefined);
+});
+
 test("stop reasons and backend errors are normalized", () => {
   assert.equal(mapStopReason("STOP"), "stop");
   assert.equal(mapStopReason("MAX_TOKENS"), "length");

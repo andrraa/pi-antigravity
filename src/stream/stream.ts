@@ -259,6 +259,16 @@ export function convertMessages(
             parts.push({ text: sanitizeText(block.thinking) });
           }
         } else if (block.type === "toolCall") {
+          // Antigravity emits a thoughtSignature only on the first functionCall of a multi-call
+          // turn, yet requires one on every replayed part or the whole request 400s with
+          // "Function call is missing a thought_signature in functionCall parts". Fill the gap with
+          // the same sentinel gemini-cli uses for signatures it never received. Claude/GPT-OSS
+          // models exposed through Antigravity take no signatures at all.
+          const signature =
+            block.thoughtSignature ??
+            (/^(claude-|gpt-oss-)/.test(model.id) || /^(claude-|gpt-oss-)/.test(runtimeModel)
+              ? undefined
+              : "skip_thought_signature_validator");
           parts.push({
             functionCall: {
               name: block.name,
@@ -267,7 +277,7 @@ export function convertMessages(
                 ? { id: sanitizeToolCallId(block.id || "", block.name) }
                 : {}),
             },
-            ...(block.thoughtSignature ? { thoughtSignature: block.thoughtSignature } : {}),
+            ...(signature ? { thoughtSignature: signature } : {}),
           });
         }
       }
