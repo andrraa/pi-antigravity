@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { Platform } from "../types/enums.js";
 import {
   getCurrentAvailableModels,
   getCurrentEndpoint,
@@ -16,6 +15,12 @@ import { antigravityEnv, asString, escapeRegExp, isRecord } from "../utils/util.
 import { antigravityFetch } from "../utils/http.js";
 
 export const DEFAULT_ENDPOINT = "https://cloudcode-pa.googleapis.com";
+
+/** Antigravity CLI (language server) release whose request shape this provider mirrors. */
+export const ANTIGRAVITY_CLI_VERSION = "1.2.14";
+/** Google changelist the CLI release was built from; part of the User-Agent. */
+export const ANTIGRAVITY_CLI_CHANGELIST = "990662481";
+
 export const ENDPOINT_FALLBACKS = [
   DEFAULT_ENDPOINT,
   "https://daily-cloudcode-pa.sandbox.googleapis.com",
@@ -63,27 +68,20 @@ function defaultUserAgent(): string {
   const os =
     process.platform === "darwin" ? "darwin" : process.platform === "win32" ? "windows" : "linux";
   const arch = process.arch === "x64" ? "amd64" : process.arch;
-  return `antigravity/1.15.8 ${os}/${arch}`;
+  return `antigravity/cli/${ANTIGRAVITY_CLI_VERSION} (aidev_client; os_type=${os}; arch=${arch}; cl=${ANTIGRAVITY_CLI_CHANGELIST}; auth_method=consumer)`;
 }
 
+/**
+ * The official Antigravity CLI identifies itself with a single User-Agent and no
+ * `X-Goog-Api-Client` / `Client-Metadata` headers. Keep these in step with the CLI
+ * release; `ANTIGRAVITY_USER_AGENT` still overrides the whole string.
+ */
 export function antigravityHeaders(token: string): Record<string, string> {
-  const platform =
-    process.platform === "darwin"
-      ? Platform.Macos
-      : process.platform === "win32"
-        ? Platform.Windows
-        : Platform.Linux;
   return {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
     Accept: "text/event-stream",
     "User-Agent": antigravityEnv("USER_AGENT") || defaultUserAgent(),
-    "X-Goog-Api-Client": "google-cloud-sdk vscode_cloudshelleditor/0.1",
-    "Client-Metadata": JSON.stringify({
-      ideType: "ANTIGRAVITY",
-      platform,
-      pluginType: "GEMINI",
-    }),
   };
 }
 

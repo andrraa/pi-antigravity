@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomUUID } from "node:crypto";
 
 export function antigravityEnv(name: string): string | undefined {
   return process.env[`ANTIGRAVITY_${name}`] || process.env[`NOAGY_${name}`];
@@ -29,6 +29,14 @@ export function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function nowRequestId(): string {
-  return `antigravity-${Date.now()}-${randomBytes(6).toString("hex")}`;
+const requestTrajectoryId = randomUUID();
+let requestStep = 0;
+
+/**
+ * Request id in the official CLI's `agent/<trajectory>/<ms>/<step-uuid>/<step>` shape.
+ * One trajectory per process groups a conversation's turns the way the CLI does;
+ * `step` increments per request so retries stay distinguishable.
+ */
+export function nextAgentRequestId(): string {
+  return `agent/${requestTrajectoryId}/${Date.now()}/${randomUUID()}/${++requestStep}`;
 }

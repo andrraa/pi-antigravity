@@ -63,7 +63,7 @@ import {
   type GeminiTextPart,
   type StreamChunk,
 } from "../types/types.js";
-import { antigravityEnv, isRecord, nowRequestId, sanitizeText } from "../utils/util.js";
+import { antigravityEnv, isRecord, nextAgentRequestId, sanitizeText } from "../utils/util.js";
 import { antigravityFetch } from "../utils/http.js";
 
 export { ANTIGRAVITY_API };
@@ -554,7 +554,7 @@ export function buildRequest(
     request,
     requestType: AntigravityRequestType.Agent,
     userAgent: AntigravityUserAgent.Antigravity,
-    requestId: nowRequestId(),
+    requestId: nextAgentRequestId(),
   };
 }
 

@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { getApiKey } from "../src/auth/oauth.js";
-import { parseApiKey } from "../src/client/client.js";
+import {
+  ANTIGRAVITY_CLI_CHANGELIST,
+  ANTIGRAVITY_CLI_VERSION,
+  antigravityHeaders,
+  parseApiKey,
+} from "../src/client/client.js";
 import {
   assertSafeApiBaseUrl,
   maskEmail,
@@ -31,6 +36,18 @@ test("callback host stays on loopback and email display is masked", () => {
   assert.equal(resolveCallbackHost("::1"), "::1");
   assert.throws(() => resolveCallbackHost("0.0.0.0"), /Unsafe/);
   assert.equal(maskEmail("alice@example.com"), "a***e@example.com");
+});
+
+test("request fingerprint matches the official Antigravity CLI", () => {
+  const headers = antigravityHeaders("tok");
+  assert.equal(
+    headers["User-Agent"],
+    `antigravity/cli/${ANTIGRAVITY_CLI_VERSION} (aidev_client; os_type=${process.platform === "darwin" ? "darwin" : process.platform === "win32" ? "windows" : "linux"}; arch=${process.arch === "x64" ? "amd64" : process.arch}; cl=${ANTIGRAVITY_CLI_CHANGELIST}; auth_method=consumer)`,
+  );
+  // The CLI sends neither of these; a stale value is what the backend fingerprints on.
+  assert.equal(headers["X-Goog-Api-Client"], undefined);
+  assert.equal(headers["Client-Metadata"], undefined);
+  assert.equal(headers.Authorization, "Bearer tok");
 });
 
 test("OAuth credentials round-trip through the provider API-key format", () => {

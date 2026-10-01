@@ -117,7 +117,7 @@ Manage all your accounts effortlessly using the `/antigravity.account` command:
 | `ANTIGRAVITY_BASE_URL` | Override the Google Cloud Code endpoint URL | `https://cloudcode-pa.googleapis.com` |
 | `ANTIGRAVITY_PROJECT_ID` | Override Google Cloud Project ID explicitly | Auto-discovered or derived from user email |
 | `ANTIGRAVITY_NO_PREWARM` | Disable TLS prewarming on extension load (`1` or `true`) | Disabled (prewarming enabled) |
-| `ANTIGRAVITY_USER_AGENT` | Custom User-Agent header string | `antigravity/1.15.8 <os>/<arch>` |
+| `ANTIGRAVITY_USER_AGENT` | Custom User-Agent header string | `antigravity/cli/1.2.14 (aidev_client; os_type=<os>; arch=<arch>; cl=990662481; auth_method=consumer)` |
 
 ---
 
