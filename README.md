@@ -1,24 +1,37 @@
-# pi-antigravity-multi-account
+<h1 align="center">pi-antigravity-multi-account</h1>
 
-[![npm version](https://img.shields.io/npm/v/pi-antigravity-multi-account.svg?style=flat-square)](https://www.npmjs.com/package/pi-antigravity-multi-account)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <em>Standalone Antigravity and Google Cloud Code provider extension for Pi Coding Agent with interactive multi-account switching and simultaneous quota monitoring.</em>
+</p>
 
-Standalone **Antigravity / Google Cloud Code** provider extension for [Pi coding agent](https://github.com/earendil-works/pi-coding-agent) featuring interactive multi-account switching, simultaneous quota monitoring, automatic session reloading, and intelligent rate-limit retries.
+<p align="center">
+  <a href="https://www.npmjs.com/package/pi-antigravity-multi-account"><img src="https://img.shields.io/npm/v/pi-antigravity-multi-account.svg?style=flat-square" alt="npm version" /></a>
+  <img src="https://img.shields.io/badge/Pi-Coding%20Agent-0969da?style=flat-square" alt="Pi Coding Agent" />
+  <img src="https://img.shields.io/badge/Node-%3E%3D18.0.0-2ea44f?style=flat-square" alt="Node Version" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-bf8700?style=flat-square" alt="License: MIT" /></a>
+</p>
+
+<p align="center">
+  <img src="assets/banner.svg" alt="pi-antigravity banner" width="850" />
+</p>
 
 ---
 
-## Key Features
+## Overview
 
-- ⚡ **Standalone Native Provider**: Zero external provider or CLI binaries required; native `streamSimple` implementation with low overhead.
-- 🧠 **Next-Gen Gemini & Claude Models**: Direct access to `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.1-pro`, `claude-sonnet-4-6`, `claude-opus-4-6`, and `gpt-oss-120b`.
-- 👥 **Interactive TUI Account Switcher**: Run `/antigravity.account` with no arguments to pick accounts interactively.
-- 🔑 **Single-Step Alias Login**: Authenticate new Google accounts directly into a named alias (`/antigravity.account login <alias>`).
-- 📊 **Multi-Account Quota Dashboard**: View remaining quotas and tier status across all accounts simultaneously via `/antigravity.account usage`.
-- 🔄 **Zero-Leakage Account Switching**: Switching profiles clears project and model caches, updates credentials, and triggers a live session reload immediately.
-- 🛡️ **Jittered Backoff Retry**: Automatic exponential retry with jitter on `429 (Too Many Requests)` and `503 (Service Unavailable)` responses.
-- 🧩 **Pi >= 0.86 Full Compatibility**: Seamlessly resolves tools and system instructions from normalized `TranscriptContext` as well as legacy `Context` models.
-- ⚡ **Connection Prewarming**: Pre-establishes TLS connections and utilizes persistent keep-alive connection pooling to eliminate cold-start latency.
-- 🔒 **Secure Credential Storage**: Multi-account profiles stored in `~/.pi/agent/antigravity-accounts.json` with strict `0o600` file permissions.
+**pi-antigravity-multi-account** is a native provider extension for the [Pi Coding Agent](https://pi.dev) that enables direct access to Google Cloud Code and Antigravity models (Gemini Flash, Claude 3.7/Sonnet, Opus, and GPT-OSS).
+
+It features native OAuth authentication, seamless switching across multiple Google accounts, real-time quota pool monitoring, and automatic token refresh without requiring external CLI dependencies.
+
+### Features
+- **Standalone Native Provider:** Direct `streamSimple` implementation with zero external binaries or CLI dependencies.
+- **Interactive Account Switcher:** Select and switch accounts dynamically via a terminal picker (`/antigravity.account`).
+- **Single-Step Alias Authentication:** Link multiple Google accounts under custom named aliases (`/antigravity.account login <alias>`).
+- **Simultaneous Quota Dashboard:** Inspect remaining hourly and weekly quota pools across all stored accounts simultaneously.
+- **Zero-Downtime Session Reloading:** Switching accounts purges model/project caches and invokes live session reloading immediately.
+- **Resilient Request Handling:** Exponential backoff retry with jitter on `429 (Too Many Requests)` and `503 (Service Unavailable)`.
+- **Connection Prewarming:** Pre-establishes TLS handshakes with persistent keep-alive pools to eliminate cold-start latency.
+- **Secure Local Storage:** Credentials are saved to `~/.pi/agent/antigravity-accounts.json` with strict POSIX `0o600` permissions.
 
 ---
 
@@ -30,7 +43,7 @@ Standalone **Antigravity / Google Cloud Code** provider extension for [Pi coding
 pi install npm:pi-antigravity-multi-account
 ```
 
-To update to the latest release:
+To upgrade:
 
 ```bash
 pi update npm:pi-antigravity-multi-account
@@ -42,7 +55,7 @@ pi update npm:pi-antigravity-multi-account
 pi install git:andrraa/pi-antigravity
 ```
 
-To update:
+To upgrade:
 
 ```bash
 pi update git:andrraa/pi-antigravity
@@ -50,35 +63,35 @@ pi update git:andrraa/pi-antigravity
 
 ---
 
-## Multi-Account Guide (`/antigravity.account`)
+## Multi-Account Guide
 
-Manage all your accounts effortlessly using the `/antigravity.account` command:
+Manage accounts and quotas using the `/antigravity.account` command:
 
 | Subcommand | Syntax | Description |
-|---|---|---|
-| *(none)* | `/antigravity.account` | Open interactive TUI account picker |
-| `login` | `/antigravity.account login <name>` | Authenticate a new Google account via OAuth and assign an alias |
-| `use` / `switch` | `/antigravity.account use <name>` | Switch active account and trigger live session reload |
+|:---|:---|:---|
+| *(none)* | `/antigravity.account` | Open interactive terminal account picker |
+| `login` | `/antigravity.account login <alias>` | Authenticate a new Google account via OAuth and assign an alias |
+| `use` / `switch` | `/antigravity.account use <alias>` | Switch active account and trigger live session reload |
 | `list` / `ls` | `/antigravity.account list` | List all saved accounts with active account indicator (`● [active]`) |
 | `usage` / `quota` | `/antigravity.account usage` | Check real-time quota status across all saved accounts |
-| `save` | `/antigravity.account save <name>` | Save current active session credentials under a new alias |
+| `save` | `/antigravity.account save <alias>` | Save current active session credentials under a new alias |
 | `rename` | `/antigravity.account rename <old> <new>` | Rename an existing account alias |
-| `delete` / `rm` | `/antigravity.account delete <name>` | Remove an account from storage |
+| `delete` / `rm` | `/antigravity.account delete <alias>` | Remove an account from storage |
 
-### Quick Examples
+### Common Workflows
 
 ```text
-# 1. Login with multiple accounts
+# 1. Authenticate multiple Google accounts
 /antigravity.account login work
 /antigravity.account login personal
 
-# 2. Check quota across all accounts at once
+# 2. Check quota pools across all accounts
 /antigravity.account usage
 
 # 3. Switch active account
 /antigravity.account use work
 
-# 4. Or switch interactively
+# 4. Open interactive account picker
 /antigravity.account
 ```
 
@@ -87,62 +100,62 @@ Manage all your accounts effortlessly using the `/antigravity.account` command:
 ## Provider Commands
 
 | Command | Description |
-|---|---|
-| `/antigravity.account [subcommand]` | Manage multi-account profiles, switch accounts, and monitor multi-account quotas |
+|:---|:---|
+| `/antigravity.account [subcommand]` | Manage multi-account profiles, switch accounts, and monitor quotas |
 | `/antigravity.usage` | Show active account quota pools (Gemini / Claude + GPT, 5h reset & weekly) |
 | `/antigravity.models [all]` | List available runtime models and remaining pool fractions |
 | `/antigravity.doctor` | Run sanitized connection, project, and model diagnostics |
 
 ---
 
-## Supported Models
+<details>
+<summary><strong>Supported Models</strong></summary>
 
 | Model ID | Thinking Support | Max Output | Description |
-|---|---|---|---|
-| `antigravity/gemini-3.8-flash` | Off, Minimal, Low, Medium, High, XHigh | 64k tokens | Latest generation fast multimodel agent |
+|:---|:---|:---|:---|
+| `antigravity/gemini-3.8-flash` | Off, Minimal, Low, Medium, High, XHigh | 64k tokens | Latest generation multimodal agent model |
 | `antigravity/gemini-3.7-flash` | Off, Minimal, Low, Medium, High, XHigh | 64k tokens | High-performance multimodal reasoning model |
 | `antigravity/gemini-3.6-flash` | Low, Medium, High | 64k tokens | Fast agentic Flash model |
 | `antigravity/gemini-3.5-flash` | Minimal, Low, Medium, High | 64k tokens | Efficient Flash model |
 | `antigravity/gemini-3.1-pro` | Low, High | ~64k tokens | Advanced reasoning model |
-| `antigravity/claude-sonnet-4-6` | Thinking (Minimal to XHigh) | 64k tokens | Anthropic Claude Sonnet with reasoning |
+| `antigravity/claude-sonnet-4-6` | Thinking (Minimal to XHigh) | 64k tokens | Anthropic Claude Sonnet with extended reasoning |
 | `antigravity/claude-opus-4-6` | Thinking (Minimal to High) | 64k tokens | Anthropic Claude Opus with deep reasoning |
 | `antigravity/gpt-oss-120b` | Medium | 32k tokens | Open-source large parameter model |
+</details>
 
----
-
-## Configuration & Environment Variables
+<details>
+<summary><strong>Configuration & Environment Variables</strong></summary>
 
 | Variable | Description | Default |
-|---|---|---|
+|:---|:---|:---|
 | `ANTIGRAVITY_BASE_URL` | Override the Google Cloud Code endpoint URL | `https://cloudcode-pa.googleapis.com` |
 | `ANTIGRAVITY_PROJECT_ID` | Override Google Cloud Project ID explicitly | Auto-discovered or derived from user email |
 | `ANTIGRAVITY_NO_PREWARM` | Disable TLS prewarming on extension load (`1` or `true`) | Disabled (prewarming enabled) |
-| `ANTIGRAVITY_USER_AGENT` | Custom User-Agent header string | `antigravity/cli/1.2.14 (aidev_client; os_type=<os>; arch=<arch>; cl=990662481; auth_method=consumer)` |
+| `ANTIGRAVITY_USER_AGENT` | Custom User-Agent header string | Standard Google Cloud Code client user agent |
+</details>
 
----
-
-## Publishing
+<details>
+<summary><strong>Publishing & Releases</strong></summary>
 
 ```bash
-# Bumping version
+# Bump version
 npm version patch # or minor / major
 
 # Publish to npm registry
 npm publish --access public
 ```
+</details>
 
----
+<details>
+<summary><strong>Disclaimer & Terms of Use</strong></summary>
 
-## Disclaimer & Terms of Use
-
-> **⚠️ Unofficial Project & Limitation of Liability:**
->
-> - This project is an **independent, community-maintained, and unofficial extension**. It is **not** affiliated with, endorsed by, sponsored by, or associated with Google LLC, Alphabet Inc., or Anthropic.
-> - **Use at your own risk.** You are solely responsible for how you use this extension and for complying with the applicable Terms of Service of Google Cloud, Google Accounts, and any related APIs.
-> - The authors and contributors assume **no liability or responsibility** for any account bans, suspensions, restrictions, data loss, quota consumption, billing issues, or any other consequences resulting from the use of this software.
+- This project is an **independent, community-maintained, and unofficial extension**. It is **not** affiliated with, endorsed by, sponsored by, or associated with Google LLC, Alphabet Inc., or Anthropic.
+- **Use at your own risk.** Users are solely responsible for compliance with the Terms of Service of Google Cloud, Google Accounts, and applicable third-party API agreements.
+- The authors assume **no liability or responsibility** for account restrictions, suspensions, data loss, quota depletion, or billing impact resulting from the use of this software.
+</details>
 
 ---
 
 ## License
 
-[MIT](LICENSE) © andrraa
+This project is licensed under the [MIT License](LICENSE).
