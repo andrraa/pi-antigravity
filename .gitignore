@@ -1,4 +1,5 @@
 node_modules/
+.tmp-run/
 .tmp-test/
 .DS_Store
 *.log
