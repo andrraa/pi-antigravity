@@ -29,4 +29,12 @@ jobs:
       - name: Verify tag matches package version
         run: test "$GITHUB_REF_NAME" = "v$(node -p "require('./package.json').version")"
 
+      - name: Skip if already published
+        id: published
+        run: |
+          if npm view "$(node -p "require('./package.json').name")@$GITHUB_REF_NAME" version >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - run: npm publish --access public
+        if: steps.published.outputs.skip != 'true'
