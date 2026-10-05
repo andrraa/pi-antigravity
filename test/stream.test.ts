@@ -107,6 +107,36 @@ test("convertMessages fills a synthetic thoughtSignature on unsigned tool calls"
   assert.equal(claudeParts[1]?.thoughtSignature, undefined);
 });
 
+test("convertMessages drops signatures that are not portable to the current model", () => {
+  const context = {
+    messages: [
+      {
+        role: "assistant",
+        provider: "antigravity",
+        model: "gemini-3.8-flash",
+        content: [{ type: "toolCall", id: "c1", name: "a", arguments: {}, thoughtSignature: "STALE" }],
+      },
+      {
+        role: "assistant",
+        provider: "9router",
+        model: model.id,
+        content: [{ type: "toolCall", id: "c2", name: "b", arguments: {}, thoughtSignature: "FOREIGN" }],
+      },
+    ],
+  } as unknown as Context;
+
+  const parts = convertMessages(model, context, "gemini-3.7-flash-tiered")
+    .flatMap((turn) => turn.parts as Array<{ thoughtSignature?: string; functionCall?: unknown }>)
+    .filter((part) => part.functionCall);
+  assert.deepEqual(
+    parts.map((part) => part.thoughtSignature),
+    [
+      "skip_thought_signature_validator",
+      "skip_thought_signature_validator",
+    ],
+  );
+});
+
 test("stop reasons and backend errors are normalized", () => {
   assert.equal(mapStopReason("STOP"), "stop");
   assert.equal(mapStopReason("MAX_TOKENS"), "length");

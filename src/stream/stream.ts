@@ -264,8 +264,14 @@ export function convertMessages(
           // "Function call is missing a thought_signature in functionCall parts". Fill the gap with
           // the same sentinel gemini-cli uses for signatures it never received. Claude/GPT-OSS
           // models exposed through Antigravity take no signatures at all.
+          //
+          // Signatures are only portable back to the model that issued them: replaying a signature
+          // recorded under a different provider/model (e.g. after a mid-session model switch) makes
+          // the backend reject the whole turn. Same treatment as thinking blocks above.
           const signature =
-            block.thoughtSignature ??
+            (msg.provider === PROVIDER_ID && msg.model === model.id
+              ? block.thoughtSignature
+              : undefined) ??
             (/^(claude-|gpt-oss-)/.test(model.id) || /^(claude-|gpt-oss-)/.test(runtimeModel)
               ? undefined
               : "skip_thought_signature_validator");
