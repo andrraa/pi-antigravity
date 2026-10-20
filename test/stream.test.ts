@@ -148,3 +148,42 @@ test("stop reasons and backend errors are normalized", () => {
     /2 hours/,
   );
 });
+
+test("pi 1.3.0 request hooks inspect and replace native payloads in order", async () => {
+  const { streamAntigravity } = await import("../src/stream/stream.js");
+  const originalFetch = globalThis.fetch;
+  const calls: string[] = [];
+  const chunk = { response: { candidates: [{ content: { parts: [{ text: "hello" }] }, finishReason: "STOP" }] } };
+  globalThis.fetch = async (_input, init) => {
+    calls.push("fetch");
+    assert.deepEqual(JSON.parse(String(init?.body)), { replaced: true });
+    return new Response(`data: ${JSON.stringify(chunk)}\n\n`, { headers: { "x-test": "ok" } });
+  };
+  try {
+    const stream = streamAntigravity(model, { messages: [] }, {
+      apiKey: JSON.stringify({ token: "test-token", projectId: "test-project" }),
+      onPayload: async (payload, currentModel) => {
+        calls.push("payload");
+        assert.equal(currentModel, model);
+        assert.equal((payload as { project: string }).project, "test-project");
+        return { replaced: true };
+      },
+      onResponse: async (response) => {
+        calls.push("response");
+        assert.equal(response.status, 200);
+        assert.equal(response.headers["x-test"], "ok");
+      },
+      onProviderStreamEvent: async (event, currentModel) => {
+        calls.push("event");
+        assert.equal(currentModel, model);
+        assert.deepEqual(event, chunk);
+      },
+    });
+    const output = await stream.result();
+    assert.equal(output.stopReason, "stop");
+    assert.deepEqual(output.content, [{ type: "text", text: "hello" }]);
+    assert.deepEqual(calls, ["payload", "fetch", "response", "event"]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

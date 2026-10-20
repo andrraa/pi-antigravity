@@ -659,6 +659,7 @@ export async function streamResponse(
   response: Response,
   stream: AssistantMessageEventStream,
   output: AssistantMessage,
+  onProviderStreamEvent?: (event: unknown) => void | Promise<void>,
 ): Promise<boolean> {
   if (!response.body) throw new Error("No response body");
   const reader = response.body.getReader();
@@ -720,6 +721,8 @@ export async function streamResponse(
       } catch {
         continue;
       }
+
+      await onProviderStreamEvent?.(chunk);
 
       if (chunk.error) {
         throw new Error(chunk.error.message || JSON.stringify(chunk.error));
@@ -890,7 +893,9 @@ export function streamAntigravity(
         for (let candIdx = 0; candIdx < runtimeCandidates.length; candIdx++) {
           runtimeModel = runtimeCandidates[candIdx]!;
           setLastResolvedRuntimeModel(runtimeModel);
-          const body = JSON.stringify(buildRequest(model, context, projectId, opts, runtimeModel));
+          const payload = buildRequest(model, context, projectId, opts, runtimeModel);
+          const replacement = await opts.onPayload?.(payload, model);
+          const body = JSON.stringify(replacement === undefined ? payload : replacement);
 
           for (const endpoint of endpointCandidates()) {
             setLastEndpoint(endpoint);
@@ -902,6 +907,10 @@ export function streamAntigravity(
                 body,
                 signal: opts.signal,
               },
+            );
+            await opts.onResponse?.(
+              { status: response.status, headers: Object.fromEntries(response.headers.entries()) },
+              model,
             );
             setLastStatus(response.status);
             if (response.ok) break;
@@ -984,7 +993,11 @@ export function streamAntigravity(
         };
         output.stopReason = "stop";
 
-        received = await streamResponse(response, stream, output);
+        received = await streamResponse(response, stream, output,
+          opts.onProviderStreamEvent
+            ? (event) => opts.onProviderStreamEvent!(event, model)
+            : undefined,
+        );
         if (received) break;
       }
 

@@ -35,6 +35,14 @@ It features native OAuth authentication, seamless switching across multiple Goog
 
 ---
 
+## Compatibility
+
+- Requires **Pi 1.3.0 or newer**; development and regression tests target 1.3.0.
+- This remains a **native Cloud Code provider**, not a wrapper around `agy`. Existing Pi OAuth and account aliases stay independent of Google's shared OS-keyring login.
+- Google's official [CLI installer](https://antigravity.google/cli/install.sh) resolved to **1.4.2** when checked on October 20, 2026. Its release version does not establish compatibility with this unofficial wire protocol.
+- The native request fingerprint remains based on the last inspected 1.2.14 protocol. New CLI models, enterprise/ADC authentication, shared keyring credentials, and full CLI parity are not claimed. Use `/antigravity.models all` to inspect your account's runtime catalog.
+- Pi request payload, response-header, and provider-stream observation hooks are supported.
+
 ## Installation
 
 ### Via npm (Recommended)

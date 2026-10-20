@@ -174,6 +174,8 @@ const freeCost = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 
 // A null entry is intentionally hidden by Pi. Do not collapse levels that happen to
 // route to the same runtime ID: the UI must reflect the levels the backend advertises.
+type ProviderChatModelConfig = Extract<ProviderModelConfig, { reasoning: boolean }>;
+
 const thinkingLevelMaps = {
   lowMediumHigh: {
     off: null,
@@ -211,10 +213,10 @@ const thinkingLevelMaps = {
     xhigh: null,
     max: null,
   },
-} satisfies Record<string, ProviderModelConfig["thinkingLevelMap"]>;
+} satisfies Record<string, ProviderChatModelConfig["thinkingLevelMap"]>;
 
 /** Same set as `agy models`, collapsed to public Pi model IDs. */
-export const ANTIGRAVITY_MODELS: ProviderModelConfig[] = [
+export const ANTIGRAVITY_MODELS: ProviderChatModelConfig[] = [
   {
     id: "gemini-3.8-flash",
     name: "Gemini 3.8 Flash (Antigravity)",

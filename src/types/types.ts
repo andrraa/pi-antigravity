@@ -12,7 +12,6 @@ import type {
   GeminiRole,
   GeminiToolCallingMode,
   ThinkingEffort,
-  ToolChoice,
 } from "./enums.js";
 
 // OAuth & Auth Types
@@ -50,8 +49,8 @@ export type AntigravityRouting = {
 export const ANTIGRAVITY_API = "antigravity-api" as const;
 export type AntigravityApi = typeof ANTIGRAVITY_API;
 
-export type AntigravityStreamOptions = SimpleStreamOptions & {
-  toolChoice?: ToolChoice;
+export type AntigravityStreamOptions = Omit<SimpleStreamOptions, "toolChoice"> & {
+  toolChoice?: SimpleStreamOptions["toolChoice"] | "any" | "required";
 };
 
 export type GeminiTextPart = { text: string };
