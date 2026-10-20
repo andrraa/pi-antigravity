@@ -852,9 +852,10 @@ export function streamAntigravity(
       setLastProjectId(projectId);
 
       const effort = opts.reasoning ?? "off";
-      const isKnownModel = model.id in ANTIGRAVITY_ROUTING;
+      const exactRuntime = model.headers?.["X-Pi-Antigravity-Runtime-Id"];
+      const isKnownModel = !!exactRuntime || model.id in ANTIGRAVITY_ROUTING;
       const baseRuntimeModel =
-        antigravityEnv("RUNTIME_MODEL")?.trim() || getAntigravityRequestModelId(model.id, effort);
+        antigravityEnv("RUNTIME_MODEL")?.trim() || exactRuntime || getAntigravityRequestModelId(model.id, effort);
 
       let initialRuntimeModel = baseRuntimeModel;
       // Skip pre-flight model discovery for known static models to optimize TTFT latency.
@@ -867,7 +868,7 @@ export function streamAntigravity(
       }
 
       const runtimeCandidates = [initialRuntimeModel];
-      const fallback = getFallbackRuntimeModel(initialRuntimeModel, effort);
+      const fallback = exactRuntime ? undefined : getFallbackRuntimeModel(initialRuntimeModel, effort);
       if (fallback && fallback !== initialRuntimeModel) {
         runtimeCandidates.push(fallback);
       }

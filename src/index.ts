@@ -1,8 +1,9 @@
+import { refreshAgentModels } from "./models/discovery.js";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { getApiKey, loginAntigravity, refreshAntigravityToken } from "./auth/index.js";
 import { DEFAULT_ENDPOINT, endpointCandidates } from "./client/index.js";
 import { getLastDiagnostics, runWithDiagnostics } from "./diagnostics/index.js";
-import { ANTIGRAVITY_MODELS, PROVIDER_ID, PROVIDER_NAME } from "./models/index.js";
+import { PROVIDER_ID, PROVIDER_NAME } from "./models/index.js";
 import { ANTIGRAVITY_API, streamAntigravity } from "./stream/index.js";
 import {
   fetchAccountUsage,
@@ -64,7 +65,8 @@ export default function (pi: ExtensionAPI): void {
     name: PROVIDER_NAME,
     baseUrl: DEFAULT_ENDPOINT,
     api: ANTIGRAVITY_API,
-    models: ANTIGRAVITY_MODELS,
+    models: [],
+    refreshModels: refreshAgentModels,
     oauth: {
       name: PROVIDER_NAME,
       login: loginAntigravity,
