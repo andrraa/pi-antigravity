@@ -2,16 +2,15 @@ import { refreshAgentModels } from "./models/discovery.js";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { getApiKey, loginAntigravity, refreshAntigravityToken } from "./auth/index.js";
 import { DEFAULT_ENDPOINT, endpointCandidates } from "./client/index.js";
-import { getLastDiagnostics, runWithDiagnostics } from "./diagnostics/index.js";
+import { runWithDiagnostics } from "./diagnostics/index.js";
 import { PROVIDER_ID, PROVIDER_NAME } from "./models/index.js";
 import { ANTIGRAVITY_API, streamAntigravity } from "./stream/index.js";
 import {
   fetchAccountUsage,
-  formatModelsList,
   formatUsageSummary,
   resolveApiKeyFromContext,
 } from "./usage/index.js";
-import { prewarmConnection, redactSecrets } from "./utils/index.js";
+import { prewarmConnection } from "./utils/index.js";
 
 import { registerAccountCommands } from "./account/index.js";
 
@@ -80,36 +79,6 @@ export default function (pi: ExtensionAPI): void {
     description: "Show Antigravity shared quota pools (Gemini / Claude+GPT, 5h + weekly)",
     handler: async (_args, ctx) => {
       await withUsage(ctx, formatUsageSummary);
-    },
-  });
-
-  pi.registerCommand("antigravity.models", {
-    description: "List Antigravity runtime models + remaining pool fraction",
-    handler: async (args, ctx) => {
-      const all = /\ball\b/i.test(args || "");
-      await withUsage(ctx, (usage) => formatModelsList(usage, { all }));
-    },
-  });
-
-  pi.registerCommand("antigravity.doctor", {
-    description: "Show sanitized Antigravity provider diagnostics",
-    handler: async (_args, ctx) => {
-      const d = getLastDiagnostics();
-      const lines = [
-        `provider=${PROVIDER_ID}`,
-        `lastResolvedRuntimeModel=${d.resolvedRuntimeModel || "none"}`,
-        `availableModels=${d.availableModels || "none"}`,
-        `matchedModel=${d.matchedModelDebug || "none"}`,
-        `lastEndpoint=${d.endpoint || "none"}`,
-        `lastStatus=${d.status ?? "none"}`,
-        `lastProjectId=${d.projectId || "none"}`,
-        ...(d.latencyMs !== undefined ? [`lastLatencyMs=${d.latencyMs}`] : []),
-        `lastError=${d.error ? redactSecrets(d.error) : "none"}`,
-        "transport=native-streamSimple",
-        "runtimeCli=not-used",
-        "commands=/antigravity.usage /antigravity.models /antigravity.doctor",
-      ];
-      emitCommandOutput(ctx, `Antigravity doctor\n${lines.join("\n")}`);
     },
   });
 
