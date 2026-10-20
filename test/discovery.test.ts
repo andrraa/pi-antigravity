@@ -16,3 +16,15 @@ test("agent catalog includes disabled, excludes Leaving Soon and non-agent entri
   assert.equal(models[1].name, "Argon [Unavailable]");
   assert.throws(() => parseAgentModels({ models: {} }), /missing agent model groups/);
 });
+
+test("discovery cancellation stops network work", async () => {
+  const { refreshAgentModels } = await import("../src/models/discovery.js");
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(refreshAgentModels({
+    allowNetwork: true,
+    credential: { type: "api_key", key: JSON.stringify({ token: "test", projectId: "test" }) },
+    signal: controller.signal,
+    publish: async () => true,
+  }), { name: "AbortError" });
+});

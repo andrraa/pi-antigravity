@@ -374,7 +374,7 @@ export async function fetchAccountUsage(apiKeyRaw?: string): Promise<AccountUsag
 
 function quotaErrorNote(msg: string): string {
   if (/SUBSCRIPTION_REQUIRED|#3501|(?:lack|missing).*license/i.test(msg)) {
-    return "Aggregate quota summary needs a paid subscription (free-tier can't use that endpoint). Per-model usage is still available via /antigravity.models.";
+    return "Aggregate quota summary needs a paid subscription (free-tier can't use that endpoint).";
   }
   return `Aggregate quota summary unavailable: ${msg.slice(0, 160)}`;
 }
@@ -405,42 +405,6 @@ export function formatUsageSummary(usage: AccountUsage): string {
   }
 
   return lines.join("\n").trimEnd();
-}
-
-export function formatModelsList(usage: AccountUsage, opts?: { all?: boolean }): string {
-  const lines: string[] = [];
-  lines.push("Antigravity available models");
-  lines.push(`project=${usage.projectId}`);
-  if (usage.defaultAgentModelId) lines.push(`defaultAgentModel=${usage.defaultAgentModelId}`);
-  lines.push("");
-
-  const rows = opts?.all
-    ? usage.models
-    : usage.models.filter((m) => !/tab_|chat_/i.test(m.modelId));
-
-  if (!rows.length) {
-    lines.push("No models returned.");
-    return lines.join("\n");
-  }
-
-  const maxId = Math.max(...rows.map((m) => m.modelId.length), 8);
-  for (const m of rows) {
-    const rem = remainingPercent(m.remainingFraction);
-    const flags = [
-      m.recommended ? "recommended" : "",
-      m.supportsThinking ? "thinking" : "",
-      m.supportsImages ? "images" : "",
-    ]
-      .filter(Boolean)
-      .join(",");
-    const name = m.displayName && m.displayName !== m.modelId ? `  ${m.displayName}` : "";
-    lines.push(
-      `${m.modelId.padEnd(maxId)}  rem ${rem === undefined ? "  ?" : String(rem).padStart(5)}%  reset ${formatReset(m.resetTime).padEnd(8)}${flags ? `  [${flags}]` : ""}${name}`,
-    );
-  }
-  lines.push("");
-  lines.push("Note: remaining % is pool-shared (not a private per-model budget).");
-  return lines.join("\n");
 }
 
 export async function resolveApiKeyFromContext(

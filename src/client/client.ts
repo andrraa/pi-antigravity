@@ -17,9 +17,9 @@ import { antigravityFetch } from "../utils/http.js";
 export const DEFAULT_ENDPOINT = "https://cloudcode-pa.googleapis.com";
 
 /** Antigravity CLI (language server) release whose request shape this provider mirrors. */
-export const ANTIGRAVITY_CLI_VERSION = "1.2.14";
-/** Google changelist the CLI release was built from; part of the User-Agent. */
-export const ANTIGRAVITY_CLI_CHANGELIST = "990662481";
+export const ANTIGRAVITY_CLI_VERSION = "1.4.2";
+/** Build changelist extracted from CLI 1.4.2: UserAgent falls back to the embedded decimal build string. */
+export const ANTIGRAVITY_CLI_CHANGELIST = "1001591392";
 
 export const ENDPOINT_FALLBACKS = [
   DEFAULT_ENDPOINT,

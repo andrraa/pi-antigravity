@@ -43,15 +43,21 @@ export async function refreshAgentModels(ctx: RefreshModelsContext): Promise<Pro
   if (!ctx.allowNetwork || !ctx.credential) return [];
   const key = ctx.credential.type === "oauth" ? getApiKey(ctx.credential) : ctx.credential.key;
   const { token, projectId } = parseApiKey(key);
+  const signal = AbortSignal.any([ctx.signal, AbortSignal.timeout(15_000)]);
   for (const endpoint of endpointCandidates()) {
-    const response = await antigravityFetch(`${endpoint}/v1internal:fetchAvailableModels`, {
-      method: "POST",
-      headers: { ...antigravityHeaders(token), Accept: "application/json" },
-      body: JSON.stringify({ project: projectId }),
-      signal: ctx.signal,
-    });
-    if (!response.ok) { await response.body?.cancel(); continue; }
-    return parseAgentModels(await response.json());
+    try {
+      const response = await antigravityFetch(`${endpoint}/v1internal:fetchAvailableModels`, {
+        method: "POST",
+        headers: { ...antigravityHeaders(token), Accept: "application/json" },
+        body: JSON.stringify({ project: projectId }),
+        signal,
+      });
+      if (!response.ok) { await response.body?.cancel(); continue; }
+      return parseAgentModels(await response.json());
+    } catch {
+      signal.throwIfAborted();
+      // A failed primary must not prevent discovery from the next configured endpoint.
+    }
   }
   throw new Error("Antigravity agent catalog discovery failed");
 }

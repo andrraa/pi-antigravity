@@ -10,13 +10,11 @@ export type DiagnosticsSnapshot = {
   availableModels?: string;
   matchedModelDebug?: string;
   latencyMs?: number;
-  maskedEmail?: string;
-  tokenExpiry?: string;
 };
 
 const storage = new AsyncLocalStorage<DiagnosticsSnapshot>();
 
-/** Last completed request snapshot for `/antigravity.doctor`. */
+/** Fallback diagnostics outside an active request. */
 let lastSnapshot: DiagnosticsSnapshot = {};
 
 function currentBag(): DiagnosticsSnapshot {
@@ -33,10 +31,6 @@ export async function runWithDiagnostics<T>(fn: () => Promise<T>): Promise<T> {
       lastSnapshot = { ...bag };
     }
   });
-}
-
-export function getLastDiagnostics(): Readonly<DiagnosticsSnapshot> {
-  return lastSnapshot;
 }
 
 /** Read endpoint from the active request bag (or last snapshot outside a request). */
@@ -76,15 +70,4 @@ export function setLastMatchedModelDebug(debug: string | undefined): void {
 }
 export function setLastLatencyMs(ms: number | undefined): void {
   currentBag().latencyMs = ms;
-}
-export function setLastMaskedEmail(email: string | undefined): void {
-  currentBag().maskedEmail = email;
-}
-export function setLastTokenExpiry(expiry: string | undefined): void {
-  currentBag().tokenExpiry = expiry;
-}
-
-/** Test helper: reset last snapshot between cases. */
-export function resetDiagnosticsForTests(): void {
-  lastSnapshot = {};
 }
